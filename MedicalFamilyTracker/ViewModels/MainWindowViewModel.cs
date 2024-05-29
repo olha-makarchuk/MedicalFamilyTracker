@@ -62,9 +62,13 @@ namespace MedicalFamilyTracker.ViewModels
                 var addNoteViewModel = new AddNoteViewModel(SelectedFamilyMember.NameMember!, _context);
                 addNote.DataContext = addNoteViewModel;
                 addNote.ShowDialog();
+
+                RefreshSheduleEntityList(); 
+
                 OnPropertyChanged(nameof(SelectedFamilyMember));
             }
         }
+
         #endregion
 
         #region CommandRefreshDataCommand
@@ -74,7 +78,6 @@ namespace MedicalFamilyTracker.ViewModels
             get
             {
                 refreshDataCommand ??= new DelegateCommand(Change);
-                OnPropertyChanged(nameof(SheduleEntityList));
                 return refreshDataCommand;
             }
         }
@@ -89,11 +92,12 @@ namespace MedicalFamilyTracker.ViewModels
                 {
                     book.Status = StatusNote.IsMissed.ToString();
                     _context.SheduleEntities.Update(book);
-                    _context.SaveChanges();
                 }
-
             }
+            _context.SaveChanges();
+            RefreshSheduleEntityList();
         }
+
         #endregion
 
         #region CommandDeleteSheduleItemCommand
@@ -113,6 +117,7 @@ namespace MedicalFamilyTracker.ViewModels
             {
                 _context.SheduleEntities.Remove(sheduleItem);
                 _context.SaveChanges();
+                RefreshSheduleEntityList(); 
             }
         }
         #endregion
@@ -159,6 +164,8 @@ namespace MedicalFamilyTracker.ViewModels
 
                 _context.SheduleEntities.Update(sheduleItem);
                 _context.SaveChanges();
+
+                RefreshSheduleEntityList();
             }
         }
         #endregion
@@ -183,5 +190,13 @@ namespace MedicalFamilyTracker.ViewModels
             listTakenMedicineView.ShowDialog();
         }
         #endregion
+        public void RefreshSheduleEntityList()
+        {
+            _context.SheduleEntities.Load();
+            SheduleEntityList = new ObservableCollection<SheduleEntity>(
+                _context.SheduleEntities.Local.Where(s => s.Status != StatusNote.IsTaken.ToString()));
+            OnPropertyChanged(nameof(SheduleEntityList));
+        }
+
     }
 }
